@@ -306,3 +306,18 @@ textarea { width: 100%; min-height: 110px; font: 12px/1.4 var(--mono); padding: 
 @keyframes fno { 0% { box-shadow: 0 0 0 0 var(--bad) } 100% { box-shadow: 0 0 0 14px transparent } }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important } }
+
+/* voz */
+.say { flex: none; width: 34px; height: 34px; padding: 0; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--accent); display: grid; place-items: center; cursor: pointer; -webkit-tap-highlight-color: transparent }
+.say svg { width: 18px; height: 18px }
+.say.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); animation: saypulse 1.4s ease-in-out infinite }
+@keyframes saypulse { 50% { box-shadow: 0 0 0 6px var(--accent-soft) } }
+.blk.say-on { position: relative }
+.blk.say-on > .say { position: absolute; top: -4px; right: 0; z-index: 1 }
+.blk.say-on > .say + h3 { padding-right: 44px; min-height: 26px }
+.blk.say-on:has(> .say + .callout, > .say + .kp) > .say { top: 8px; right: 8px }
+.blk.say-on > .say + .callout, .blk.say-on > .say + .kp { padding-right: 50px }
+.qhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 34px }
+.why > .say { float: right; width: 30px; height: 30px; margin: -4px -6px 4px 10px }
+.why > .say svg { width: 16px; height: 16px }
+@media (prefers-reduced-motion: reduce) { .say.on { animation: none } }

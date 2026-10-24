@@ -322,6 +322,21 @@ textarea { width: 100%; min-height: 110px; font: 12px/1.4 var(--mono); padding: 
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important } }
 
+/* voz */
+.say { flex: none; width: 34px; height: 34px; padding: 0; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--accent); display: grid; place-items: center; cursor: pointer; -webkit-tap-highlight-color: transparent }
+.say svg { width: 18px; height: 18px }
+.say.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); animation: saypulse 1.4s ease-in-out infinite }
+@keyframes saypulse { 50% { box-shadow: 0 0 0 6px var(--accent-soft) } }
+.blk.say-on { position: relative }
+.blk.say-on > .say { position: absolute; top: -4px; right: 0; z-index: 1 }
+.blk.say-on > .say + h3 { padding-right: 44px; min-height: 26px }
+.blk.say-on:has(> .say + .callout, > .say + .kp) > .say { top: 8px; right: 8px }
+.blk.say-on > .say + .callout, .blk.say-on > .say + .kp { padding-right: 50px }
+.qhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 34px }
+.why > .say { float: right; width: 30px; height: 30px; margin: -4px -6px 4px 10px }
+.why > .say svg { width: 16px; height: 16px }
+@media (prefers-reduced-motion: reduce) { .say.on { animation: none } }
+
 </style>
 <main id="app" aria-live="polite"></main>
 <nav id="tabs" aria-label="Secciones"></nav>
@@ -2382,9 +2397,60 @@ const I = {
   warn: '<path d="M12 3 2 20h20L12 3Zm0 6v5m0 3v.5"/>',
   cloud: '<path d="M7 18a4.5 4.5 0 0 1-.6-9A6 6 0 0 1 18 8.5a4.8 4.8 0 0 1-.5 9.5H7Z"/>',
   grid: '<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/>',
+  sound: '<path d="M4 9v6h4l5 4V5L8 9H4Zm12.5-.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>',
   trophy: '<path d="M8 4h8v6a4 4 0 0 1-8 0V4Zm0 2H4a4 4 0 0 0 4 4m8-4h4a4 4 0 0 1-4 4m-4 4v4m-4 3h8"/>'
 };
 const ic = (n, cls = '') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
+
+/* ---------- voz (Web Speech API del dispositivo) ---------- */
+const TTS = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window ? window.speechSynthesis : null;
+let voice = null, sayK = null, sayN = 0, saySeq = 0;
+const pickVoice = () => {
+  const score = v => (/premium|enhanced|natural|neural|mejorad/i.test(v.name) ? 4 : 0) + (/google|m[oó]nica|paulina|helena|sabina|dalia|elvira/i.test(v.name) ? 2 : 0) + (/^es[-_](MX|US|419|CO|PE)/i.test(v.lang) ? 1 : 0) + (v.localService ? 1 : 0);
+  voice = TTS.getVoices().filter(v => /^es/i.test(v.lang)).sort((a, b) => score(b) - score(a))[0] || null;
+};
+if (TTS) { pickVoice(); TTS.addEventListener?.('voiceschanged', pickVoice); }
+const plain = s => String(s ?? '').replace(/\*\*|`/g, '').replace(/\s*\n+\s*/g, '. ');
+const sayHtml = k => TTS ? `<button class="say ${sayK === k ? 'on' : ''}" data-say="${esc(k)}" aria-label="Escuchar" title="Escuchar">${ic('sound')}</button>` : '';
+const sayMark = (k, on) => $$('[data-say]').forEach(b => { if (b.dataset.say === k) b.classList.toggle('on', on); });
+function stopSay() { if (!TTS) return; sayN++; TTS.cancel(); if (sayK) sayMark(sayK, false); sayK = null; }
+function say(k, text) {
+  if (sayK === k) { stopSay(); return; }
+  stopSay();
+  const n = sayN, parts = plain(text).replace(/\bvs\./gi, 'versus').replace(/\s*=\s*/g, ' es ').replace(/\s*\/\s*/g, ', ').replace(/([.!?;:])(\s*\.)+/g, '$1').split(/(?<=[.!?;])\s+/).map(t => t.trim()).filter(Boolean);
+  if (!parts.length) return;
+  sayK = k; sayMark(k, true);
+  const end = () => { if (sayN === n) { sayMark(k, false); sayK = null; } };
+  // frases cortas: Chrome corta los textos largos a los ~15 s
+  parts.forEach((t, i) => {
+    const u = new SpeechSynthesisUtterance(t);
+    u.lang = voice ? voice.lang : 'es-ES'; if (voice) u.voice = voice;
+    if (i === parts.length - 1) { u.onend = end; u.onerror = end; }
+    TTS.speak(u);
+  });
+}
+function bindSay(root, texts) { $$('[data-say]', root).forEach(b => b.onclick = e => { e.stopPropagation(); say(b.dataset.say, texts[b.dataset.say]); }); }
+// texto a leer de cada bloque de teoría (los interactivos no se leen)
+function blockSpeech(b) {
+  const t = b.title ? b.title + '. ' : '';
+  switch (b.type) {
+    case 'text': return t + b.body;
+    case 'analogy': return 'Analogía. ' + b.body;
+    case 'trap': return 'Trampa de examen. ' + b.body;
+    case 'keypoints': return 'Para el examen recuerda. ' + b.items.map(x => plain(x).replace(/[.;]?$/, '.')).join(' ');
+    case 'cards': return t + b.items.map(c => `${plain(c.title)}. ${plain(c.body)}`.replace(/[.;]?$/, '.')).join(' ');
+    case 'flip': return t + b.items.map(c => `${plain(c.front)}: ${plain(c.back)}`.replace(/[.;]?$/, '.')).join(' ');
+    case 'compare': return t + b.rows.map(r => plain(r[0]) + '. ' + r.slice(1).map((c, k) => `${plain(b.head[k + 1])}: ${plain(c)}`).join('; ') + '.').join(' ');
+  }
+  return '';
+}
+function qSpeech(p) {
+  let t = plain(p.q).replace('___', 'espacio en blanco');
+  if (p.o) t += ' ' + p.o.map((o, i) => `${LETTERS[i]}: ${plain(o)}.`).join(' ');
+  if (p.s) t += ' ' + p.s.map((s, i) => `Afirmación ${i + 1}: ${plain(s.text)}.`).join(' ');
+  if (p.left) t += ' Relaciona: ' + p.left.map(plain).join('; ') + '. Con: ' + p.right.map(plain).join('; ') + '.';
+  return t;
+}
 
 /* ---------- contenido ---------- */
 const WORLDS = ((window.AZ && window.AZ.worlds) || []).slice().sort((a, b) => a.order - b.order);
@@ -2466,6 +2532,7 @@ const app = $('#app');
 let cleanup = [];
 function onLeave(fn) { cleanup.push(fn); }
 function mount(html, fullscreen) {
+  stopSay();
   cleanup.forEach(f => f()); cleanup = [];
   closeSheet();
   document.body.classList.toggle('fs', !!fullscreen);
@@ -2562,7 +2629,8 @@ function Level(l) {
     <button class="card action" data-a="lesson"><span class="ic">${ic('book')}</span><span><b>${st.lesson ? 'Repasar la lección' : 'Lección interactiva'}</b><small>${l.minutes || 6} min · ${l.lesson.length} pasos${st.lesson ? ' · completada' : ''}</small></span><span class="go">${ic('chev')}</span></button>
     <button class="card action" data-a="quiz"><span class="ic">${ic('target')}</span><span><b>Quiz del nivel</b><small>10 preguntas · aprueba con 80%${st.best != null ? ` · mejor ${pct(st.best)}%` : ''}</small></span><span class="go">${ic('chev')}</span></button>
   </div>
-  ${kp ? `<div class="kp"><span class="eyebrow">Para el examen recuerda</span><ul>${kp.items.map(t => `<li>${ic('check')}<span>${fmt(t)}</span></li>`).join('')}</ul></div>` : ''}`, true);
+  ${kp ? `<div class="blk say-on">${sayHtml('kp:' + l.id)}<div class="kp"><span class="eyebrow">Para el examen recuerda</span><ul>${kp.items.map(t => `<li>${ic('check')}<span>${fmt(t)}</span></li>`).join('')}</ul></div></div>` : ''}`, true);
+  if (kp) bindSay(app, { ['kp:' + l.id]: blockSpeech(kp) });
   $('[data-close]').onclick = () => go('home');
   $('[data-a=lesson]').onclick = () => Lesson(l);
   $('[data-a=quiz]').onclick = () => {
@@ -2667,6 +2735,12 @@ function renderBlock(b, el, complete) {
     }
     default: el.innerHTML = ''; complete();
   }
+  const speech = blockSpeech(b);
+  if (TTS && speech) {
+    const k = 'b' + (++saySeq);
+    el.classList.add('say-on'); el.insertAdjacentHTML('afterbegin', sayHtml(k));
+    bindSay(el, { [k]: speech });
+  }
 }
 
 /* ---------- preguntas ---------- */
@@ -2721,7 +2795,9 @@ function QView(p, el, ans, onChange, reveal) {
       }).join('')}</div>`;
     }
     const hint = p.t === 'multi' ? ` · elige ${p.a.length}` : '';
-    el.innerHTML = `<div class="qwrap"><span class="eyebrow">${KIND[p.t]}${hint}</span><h2 class="q-text">${text}</h2>${body}${reveal ? `<div class="why"><strong>Explicación.</strong> ${fmt(p.why)}</div>` : ''}</div>`;
+    const kq = p.id + ':q', kw = p.id + ':w';
+    el.innerHTML = `<div class="qwrap"><div class="qhead"><span class="eyebrow">${KIND[p.t]}${hint}</span>${sayHtml(kq)}</div><h2 class="q-text">${text}</h2>${body}${reveal ? `<div class="why">${sayHtml(kw)}<strong>Explicación.</strong> ${fmt(p.why)}</div>` : ''}</div>`;
+    bindSay(el, { [kq]: qSpeech(p), [kw]: 'Explicación. ' + p.why });
     if (reveal) return;
     $$('.opt', el).forEach(b => b.onclick = () => {
       const i = +b.dataset.i;
