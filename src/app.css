@@ -54,7 +54,7 @@ body.fs #tabs { display: none }
 .brand { display: flex; align-items: center; gap: 10px }
 .brand .logo { width: 36px; height: 36px; border-radius: 10px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center }
 .brand h1 { font-size: 21px; font-weight: 800; letter-spacing: -.01em }
-.brand small { display: block; font: 600 11px/1 var(--mono); color: var(--muted); letter-spacing: .04em }
+.brand small { display: block; white-space: nowrap; font: 600 11px/1 var(--mono); color: var(--muted); letter-spacing: .04em }
 .chips { display: flex; gap: 6px }
 .chip { display: inline-flex; align-items: center; gap: 4px; padding: 5px 9px; border-radius: 99px; background: var(--surface); border: 1px solid var(--line); font: 600 13px/1 var(--mono) }
 .chip svg { width: 15px; height: 15px }
@@ -85,8 +85,10 @@ body.fs #tabs { display: none }
 .gauge svg { width: 120px; height: 72px; overflow: visible }
 .gauge b { position: absolute; left: 0; right: 0; bottom: 0; text-align: center; font: 700 22px/1 var(--mono) }
 .gauge b small { display: block; font-size: 10.5px; color: var(--muted); font-weight: 500; margin-top: 2px }
-.wbars { display: grid; gap: 8px; min-width: 0 }
-.wbar { display: grid; gap: 3px; font-size: 12.5px }
+@media (max-width: 440px) { .ready { grid-template-columns: minmax(0, 1fr); justify-items: center } .ready .wbars { width: 100% } }
+.wbars { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; min-width: 0 }
+.wbar { display: grid; grid-template-columns: minmax(0, 1fr); gap: 3px; font-size: 12.5px; min-width: 0 }
+.wbar .lbl span:last-child { flex: none }
 .wbar .lbl { display: flex; justify-content: space-between; gap: 8px; color: var(--muted) }
 .wbar .lbl span:first-child { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); font-weight: 600 }
 .track { height: 7px; border-radius: 9px; background: var(--line); overflow: hidden }

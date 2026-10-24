@@ -1,5 +1,5 @@
 // Caché de la app para usarla sin conexión. VERSION cambia en cada build.
-const VERSION = 'aq-21df58ad46';
+const VERSION = 'aq-a47e152fcd';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {

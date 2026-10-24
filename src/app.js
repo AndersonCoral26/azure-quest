@@ -186,7 +186,7 @@ function Home() {
   } else hero = `<div class="hero"><span class="eyebrow">Ruta completada</span><h2>Ya pasaste todos los niveles</h2><p>Ahora toca el simulacro de 50 preguntas en 45 minutos.</p><button class="btn" data-goexam>Ir al simulacro ${ic('chev')}</button></div>`;
 
   mount(`
-  <header class="head"><div class="brand"><div class="logo">${ic('cloud')}</div><div><h1>Azure Quest</h1><small>AZ-900 · TEMARIO JUL 2026</small></div></div>
+  <header class="head"><div class="brand"><div class="logo">${ic('cloud')}</div><div><h1>Azure Quest</h1><small>AZ-900 · JUL 2026</small></div></div>
   <div class="chips"><span class="chip fire" title="Racha de días">${ic('fire')}${streakNow()}</span><span class="chip xp" title="Experiencia">${ic('star')}${S.xp}</span></div></header>
   ${hero}
   <section class="card ready">${gauge(predicted())}<div class="wbars">${WORLDS.map(w => `<div class="wbar"><div class="lbl"><span>${esc(w.title)}</span><span class="mono">${pct(worldReady(w))}%</span></div><div class="track ${worldReady(w) >= .8 ? 'ok' : ''}"><i style="width:${pct(worldReady(w))}%"></i></div></div>`).join('')}</div></section>

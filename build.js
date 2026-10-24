@@ -5,7 +5,8 @@ const safe = s => s.replace(/<\/script/gi, '<\\/script');
 const content = ['w1', 'w2', 'w3'].filter(w => fs.existsSync(path.join(R, `content/${w}.js`))).map(w => safe(rd(`content/${w}.js`))).join('\n');
 const page = `<title>Azure Quest</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="theme-color" content="#0a62d0">
+<meta name="theme-color" content="#eef3f9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#08111f" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Azure Quest">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

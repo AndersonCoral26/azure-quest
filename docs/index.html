@@ -6,7 +6,8 @@
 </head><body>
 <title>Azure Quest</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="theme-color" content="#0a62d0">
+<meta name="theme-color" content="#eef3f9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#08111f" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Azure Quest">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -68,7 +69,7 @@ body.fs #tabs { display: none }
 .brand { display: flex; align-items: center; gap: 10px }
 .brand .logo { width: 36px; height: 36px; border-radius: 10px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center }
 .brand h1 { font-size: 21px; font-weight: 800; letter-spacing: -.01em }
-.brand small { display: block; font: 600 11px/1 var(--mono); color: var(--muted); letter-spacing: .04em }
+.brand small { display: block; white-space: nowrap; font: 600 11px/1 var(--mono); color: var(--muted); letter-spacing: .04em }
 .chips { display: flex; gap: 6px }
 .chip { display: inline-flex; align-items: center; gap: 4px; padding: 5px 9px; border-radius: 99px; background: var(--surface); border: 1px solid var(--line); font: 600 13px/1 var(--mono) }
 .chip svg { width: 15px; height: 15px }
@@ -99,8 +100,10 @@ body.fs #tabs { display: none }
 .gauge svg { width: 120px; height: 72px; overflow: visible }
 .gauge b { position: absolute; left: 0; right: 0; bottom: 0; text-align: center; font: 700 22px/1 var(--mono) }
 .gauge b small { display: block; font-size: 10.5px; color: var(--muted); font-weight: 500; margin-top: 2px }
-.wbars { display: grid; gap: 8px; min-width: 0 }
-.wbar { display: grid; gap: 3px; font-size: 12.5px }
+@media (max-width: 440px) { .ready { grid-template-columns: minmax(0, 1fr); justify-items: center } .ready .wbars { width: 100% } }
+.wbars { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; min-width: 0 }
+.wbar { display: grid; grid-template-columns: minmax(0, 1fr); gap: 3px; font-size: 12.5px; min-width: 0 }
+.wbar .lbl span:last-child { flex: none }
 .wbar .lbl { display: flex; justify-content: space-between; gap: 8px; color: var(--muted) }
 .wbar .lbl span:first-child { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); font-weight: 600 }
 .track { height: 7px; border-radius: 9px; background: var(--line); overflow: hidden }
@@ -2530,7 +2533,7 @@ function Home() {
   } else hero = `<div class="hero"><span class="eyebrow">Ruta completada</span><h2>Ya pasaste todos los niveles</h2><p>Ahora toca el simulacro de 50 preguntas en 45 minutos.</p><button class="btn" data-goexam>Ir al simulacro ${ic('chev')}</button></div>`;
 
   mount(`
-  <header class="head"><div class="brand"><div class="logo">${ic('cloud')}</div><div><h1>Azure Quest</h1><small>AZ-900 · TEMARIO JUL 2026</small></div></div>
+  <header class="head"><div class="brand"><div class="logo">${ic('cloud')}</div><div><h1>Azure Quest</h1><small>AZ-900 · JUL 2026</small></div></div>
   <div class="chips"><span class="chip fire" title="Racha de días">${ic('fire')}${streakNow()}</span><span class="chip xp" title="Experiencia">${ic('star')}${S.xp}</span></div></header>
   ${hero}
   <section class="card ready">${gauge(predicted())}<div class="wbars">${WORLDS.map(w => `<div class="wbar"><div class="lbl"><span>${esc(w.title)}</span><span class="mono">${pct(worldReady(w))}%</span></div><div class="track ${worldReady(w) >= .8 ? 'ok' : ''}"><i style="width:${pct(worldReady(w))}%"></i></div></div>`).join('')}</div></section>
